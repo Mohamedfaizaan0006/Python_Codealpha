@@ -1,0 +1,95 @@
+import json
+import os
+
+PORTFOLIO_FILE = "portfolio.json"
+
+def load_portfolio():
+    if os.path.exists(PORTFOLIO_FILE):
+        with open(PORTFOLIO_FILE, "r") as file:
+            return json.load(file)
+    else:
+        return {}
+
+def save_portfolio(portfolio):
+    with open(PORTFOLIO_FILE, "w") as file:
+        json.dump(portfolio, file, indent=4)
+
+def add_stock(portfolio, symbol, shares, purchase_price):
+    if symbol in portfolio:
+        total_old_cost = portfolio[symbol]["shares"] * portfolio[symbol]["purchase_price"]
+        total_new_cost = shares * purchase_price
+        total_shares = portfolio[symbol]["shares"] + shares
+        new_purchase_price = (total_old_cost + total_new_cost) / total_shares
+        portfolio[symbol]["shares"] = total_shares
+        portfolio[symbol]["purchase_price"] = new_purchase_price
+    else:
+        portfolio[symbol] = {
+            "shares": shares,
+            "purchase_price": purchase_price
+        }
+    save_portfolio(portfolio)
+    print(f"Added {shares} shares of {symbol} to your portfolio.")
+
+def remove_stock(portfolio, symbol):
+    if symbol in portfolio:
+        del portfolio[symbol]
+        save_portfolio(portfolio)
+        print(f"Removed {symbol} from your portfolio.")
+    else:
+        print(f"{symbol} is not in your portfolio.")
+
+def track_portfolio(portfolio):
+    total_invested = 0
+    total_value = 0
+    print("\nPortfolio Performance:")
+    print(f"{'Symbol':<10}{'Shares':<10}{'Purchase Price':<20}{'Current Price':<20}{'Value':<10}")
+    print("="*70)
+    
+    for symbol, details in portfolio.items():
+        shares = details["shares"]
+        purchase_price = details["purchase_price"]
+        current_price = float(input(f"Enter current price for {symbol}: "))  # User manually inputs current price
+        total_invested += purchase_price * shares
+        current_value = current_price * shares
+        total_value += current_value
+        print(f"{symbol:<10}{shares:<10}{purchase_price:<20}{current_price:<20}{current_value:<10}")
+    
+    print("\nTotal Invested: $", round(total_invested, 2))
+    print("Total Current Value: $", round(total_value, 2))
+    performance = (total_value - total_invested) / total_invested * 100 if total_invested > 0 else 0
+    print(f"Portfolio Performance: {performance:.2f}%")
+
+def portfolio_manager():
+    portfolio = load_portfolio()
+    
+    while True:
+        print("\nOptions: ")
+        print("1. Add stock")
+        print("2. Remove stock")
+        print("3. Track portfolio")
+        print("4. Exit")
+        
+        choice = input("Choose an option: ")
+        
+        if choice == "1":
+            symbol = input("Enter stock symbol : ").upper()
+            shares = float(input(f"Enter number of shares for: "))
+            purchase_price = float(input(f"Enter purchase price per share for: "))
+            add_stock(portfolio, symbol, shares, purchase_price)
+        
+        elif choice == "2":
+            symbol = input("Enter stock symbol to remove: ").upper()
+            remove_stock(portfolio, symbol)
+        
+        elif choice == "3":
+            track_portfolio(portfolio)
+        
+        elif choice == "4":
+            print("Exiting the portfolio manager.")
+            break
+        
+        else:
+            print("Invalid option, please try again.")
+
+if __name__ == "__main__":
+    portfolio_manager()
